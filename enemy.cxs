@@ -1,0 +1,138 @@
+' Monkey Pixels, Foppy Games 2011.
+' enemy.monkey.
+
+Import mojo
+
+Import constants
+Import deltatimer
+Import pixel
+
+Class TEnemy Extends TPixel
+	' TEnemy extends Pixels, just like TPlayer did. TEnemy and TPlayer have the same parent
+	' class.
+	
+	Field fAlpha: Float
+	Field fSpecial: Bool
+	Field fSpecialCountDown: Float
+	
+	Method New()
+		Super.New(gPlayerX + Rnd(-LAUNCH_RADIUS, LAUNCH_RADIUS), gPlayerY + Rnd(-LAUNCH_RADIUS, LAUNCH_RADIUS))
+		
+		' Like TPlayer, Enemy also calls the constructor of its parent class. This time
+		' the location that is passed along is based on the location of the player, as we
+		' want the enemy pixel to appear close to the player.
+		
+		fAlpha = 0
+		fSpecial = False
+		
+		' Enemy will become special.
+		If Int(Rnd(100)) < SPECIAL_CHANCE Then
+			fSpecialCountDown = Rnd(600, 1200)
+		
+		' Enemy will not become special.
+		Else
+			fSpecialCountDown = 0
+		End If
+		
+		' Some enemies will be 'special'. Here we basically throw dice to see if this
+		' enemy will become special. Int(Rnd(100)) gives a random number between 0 (inclusive) and
+		' 100 (exclusive). If the number is smaller that SPECIAL_CHANCE,
+		' it will become special. As an example, if we were to set SPECIAL_CHANCE to 100,
+		' the random number would always be smaller than that, resulting in a 100% chance
+		' of the enemy becoming special. If the enemy is special, its special count down
+		' is set to a number that is higher than zero. If that count down reach zero
+		' (later on) the enemy will truely become special and start blinking.
+	End
+	
+	Method Update:Void()
+		' The update method of the enemy pixel moves it around at random, but only if it
+		' is fully visible. If not fully visible, it will continue to increase its fAlpha
+		' value until the enemy is visible (fAlpha is then 1).
+		
+		' enemy is fully visible.
+		If fAlpha = 1 Then
+			' Move enemy in random direction.
+			fX += (Int(Rnd(3))-1) * ENEMY_SPEED * TDeltaTimer.gDeltaFactor
+			fY += (Int(Rnd(3))-1) * ENEMY_SPEED * TDeltaTimer.gDeltaFactor
+			
+			' The x and y values are changed by a value that is either -1, 0, or 1
+			' times the enemy pixel speed. For the x component, that means it will 
+			' move to the left, stay where it is, or move to the right respectively.
+			' Int(Rnd(3)) is a random value that is 0, 1 e 2. If we then subtract 1 
+			' from that, we get -1, 0 or 1.
+			stayOnScreen()
+			' As in TPlayer, we need to make sure the pixel stays on screen.
+			
+			' Next, we check if this enemy is close to the player. If so this is
+			' registered as a hit in the global variable gPlayerHit. Except if the
+			' enemy is special, in that case it is registered as a special hit in
+			' gSpecialHit. In both cases the enemy is deactivated.
+			
+			' Player is near enemy horizontally.
+			If Abs(gPlayerX-fX) < HIT_RADIUS Then
+				' Player is near enemy vertically.
+				If Abs(gPlayerY - fY) < HIT_RADIUS THEN
+					 ' Enemy is normal.
+					 If Not(fSpecial) Then
+					 	gPlayerHit = True
+					 	fActive = False
+					 
+					 	' Enemy is special.
+					 Else
+					 	gSpecialHit = True
+					 	fActive = False
+					 Endif
+				Endif
+			Endif
+		' Enemy is still appearing.
+		Else
+			fAlpha += ENEMY_ALPHA_CHANGE * TDeltaTimer.gDeltaFactor
+			
+			' The speed by which an enemy changes from transparent to solid is also
+			' adjusted by the delta time factor.
+			If fAlpha > 1 Then
+				fAlpha = 1
+			Endif
+		Endif
+		
+		' If the enemy is destined to become special (if it is currently counting down),
+		' we continue counting down on its special count down. When the reaches zero,
+		' fSpecial is set to true. This will affect the way the pixel is drawn in its
+		' render() method. It will also change the result of a hit with the player as
+		' seen above.
+		' Enemy is counting down to becoming special.
+		If fSpecialCountDown > 0 Then
+			fSpecialCountDown -= 1.0 * TDeltaTimer.gDeltaFactor
+			' countDown has finished.
+			If fSpecialCountDown <= 0 Then
+				fSpecialCountDown = 0
+				fSpecial = True
+			Endif
+		Endif
+	End
+	
+	Method Render:Void()
+		' The render method of TEnemy class draws a red pixel normally, but if the enemy if
+		' special it will pack a random color for the drawing each time, resulting in a
+		' blinking pixel.
+		SetAlpha (fAlpha)
+		
+		' The enemy's fAlpha value is used for the alpha value in drawing the pixel.
+		If Not(fSpecial) Then
+			SetColor 255, 0, 0
+		Else
+			Local color: Int = Int(Rnd(256))
+			SetColor (color, color, color)
+		Endif
+		
+		DrawRect (fX, fY, fW, fH)
+	End Method
+	
+End
+	
+		
+							 
+					 
+		
+	
+		

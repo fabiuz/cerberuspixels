@@ -1,0 +1,124 @@
+' Monkey Pixels, FoppyGames 2011.
+' pixel.monkey.
+Strict
+
+Import mojo
+
+Import constants
+Import deltatimer
+
+Class TPixel
+	Global gList:List<TPixel> = New List<TPixel>
+	
+	Global gPlayerX:Int
+	Global gPlayerY:Int
+	Global gPlayerHit:Bool
+	Global gSpecialHit:Bool
+	
+	Field fX:Float
+	Field fY:Float
+	Field fW:Int
+	Field fH:Int
+	Field fActive:Bool
+	
+	Method New(pX:Int, pY:Int)
+		fX = pX
+		fY = pY
+		fW = PIXEL_WIDTH
+		fH = PIXEL_HEIGHT
+		fActive = True
+		
+		' add this new object to the global list.
+		gList.AddLast(Self)
+	End
+	
+	Function init:Void()
+		gList.Clear()
+		gPlayerHit = False
+		gSpecialHit = False
+	End 
+	
+	Function updateAll:Void()
+		For Local pixel: TPixel = Eachin gList
+			pixel.Update()
+		Next
+	End
+	
+	Function renderAll:Void()
+		For Local pixel:TPixel = Eachin gList
+			pixel.Render()
+		Next
+	End
+	
+	Function removeInactive:Void()
+		For Local pixel:TPixel = Eachin gList
+			If (Not(pixel.fActive)) Then
+				gList.Remove(pixel)
+			End
+		Next
+	End
+	
+	Function deactivateEnemiesAroundPlayer:Void(pPlayer:TPixel)
+		For Local pixel: TPixel = Eachin gList
+			Local dX:Int = gPlayerX - pixel.fX
+			Local dY:Int = gPlayerY - pixel.fY
+			
+			' Pixel is within radius from player.
+			If (Sqrt(dX*dX+dY*dY) <= SPECIAL_REMOVE_RADIUS) THEN
+				' Here we use Pythagoras' theorem to compute the distance between
+				' two objects, using the differences in their x and y components.
+				' If the distance is smaller that the constant
+				' SPECIAL_REMOVE_RADIUS, the pixel is removed, but only if it is
+				' not the player. The pixel is not removed directly; instead its
+				' fActive value is set to false, so it will be removed later.
+				
+				' pixel is not player.
+				If (pixel <> pPlayer) Then
+					pixel.fActive = False
+				End
+			End
+		Next
+	End
+
+	Function deactivateEveryNthEnemy:Void(pPlayer:TPixel)
+		' A function to remove every Nth enemy. Again the player itself is passed along
+		' as a parameter so the function knows which pixel is the player and therefore
+		' not an enemy. The function goes through all TPixel objects in a For...Next
+		' loop, while counting from 0. Once count is equal to (or greater than) N,
+		' the pixel currently being visited in the list will be removed (it it is not the
+		' player). The count is then also reset to zero.
+		
+		Local count: Int = 0
+		For Local pixel: TPixel = Eachin gList
+			count += 1
+			' pixel is next Nth pixel in the list.
+			If (count >= SPECIAL_REMOVE_EVERY_NTH) Then
+				' pixel is not player.
+				If (pixel <> pPlayer) Then
+					pixel.fActive = False
+					count = 0
+				End If
+			End
+		Next
+	End
+	
+	Method stayOnScreen:Void()
+		If (fX < 0) Then 
+			fX = 0
+		End
+		If (fX > SCREEN_WIDTH - fW) THEN 
+			fX = SCREEN_WIDTH - fW
+		End
+		If (fY < 0) Then
+			fY = 0
+		End
+		If (fY > SCREEN_HEIGHT - fH) Then
+			fY = SCREEN_HEIGHT - fH
+		End
+	End
+	
+	Method Update:Void() Abstract
+	Method Render:Void() Abstract
+		
+End
+		

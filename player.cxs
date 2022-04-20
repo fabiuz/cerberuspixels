@@ -1,0 +1,53 @@
+' Monkey Pixels, FoppyGames 2011.
+' player.monkey.
+
+Import mojo
+
+Import constants
+Import deltatimer
+Import pixel
+
+Class TPlayer Extends TPixel
+	
+	Method New()
+		Super.New(SCREEN_WIDTH/2, SCREEN_HEIGHT/2)
+	End
+	
+	Method Update:Void()
+		If KeyDown(KEY_LEFT) Then
+			fX -= PLAYER_SPEED * TDeltaTimer.gDeltaFactor
+		Else If KeyDown(KEY_RIGHT) Then
+			fX += PLAYER_SPEED * TDeltaTimer.gDeltaFactor
+		End
+		
+		If KeyDown(KEY_UP) Then
+			fY -= PLAYER_SPEED * TDeltaTimer.gDeltaFactor
+		Else If KeyDown(KEY_DOWN) Then
+			fY += PLAYER_SPEED * TDeltaTimer.gDeltaFactor
+		Endif
+		
+		stayOnScreen()
+		' Method stayOnScreen() is part of TPixel. As TPlayer is extended from TPixel, it
+		' can make use of this method. It is called after changing fX and fY to adjust
+		' those values os the pixels stays on screen.
+		
+		' Also store player location in global variables.
+		gPlayerX = fX
+		gPlayerY = fY
+		
+		' The location of the player is now stored in global defined in TPixel (and 
+		' therefore usable from TPlayer, the child class) so that it may be used by
+		' pixels of type Enemy (which will be shown in the next chapter to also be a 
+		' child class of TPixel).
+	End
+	
+	Method Render:Void()
+		' Method render() is called from the render function of TPixel to draw all pixel
+		' objects. It draws a solid green rectangle at the current location.
+		SetAlpha 1
+		SetColor (0, 255, 0)
+		DrawRect (fX, fY, fW, fH)
+	End
+End
+		
+	

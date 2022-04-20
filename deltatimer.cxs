@@ -1,0 +1,44 @@
+' Monkey Pixels, FoppyGames 2011.
+' deltatimer.monkey
+
+Import mojo
+
+Import constants
+
+Class TDeltaTimer
+	Global gDeltaTime:Int
+	Global gDeltaFactor: Float
+	
+	' Theses globals are used to store the last time we called the TDeltaTimer.update()
+	' function, and the resulting delta time factor. This last value is the one the rest of
+	' the program will be interested in. As you can see, there are not fields, and no methods
+	' in this class. It only has globals and functions. This means it is not meant not be used
+	' to create objects from. There will be no 'New DeltaTimer()' anywhere the program.
+	' In fact, there is not even a method New(). Instead, function are called upon directly
+	' as in 'TDeltaTimer.update()'. This is a called 'static class' and it's a nice way of
+	' combining variables and functions that work together in a certain context.
+	
+	Function init:Void()
+		gDeltaTime = Millisecs()
+	End
+	
+	Function Update:Void()
+		' The update function of TDeltaTimer is called every frame from the main program.
+		' It will compute the delta time factor that other parts of the program will use
+		' to change the speed at wich objects move, for example.
+
+		Local time:Int = Millisecs()		
+		' First, the current time is noted.
+		
+		gDeltaFactor = (time - gDeltaTime) / (1000.0/UPDATE_RATE)
+		' Then, the difference with the previous time is computed: time-gDeltaTime is
+		' the number of milliseconds between the previous call to update and this call to
+		' update, so it's the time from one frame to the next. This is divided by the
+		' number of milliseconds there SHOULD have been between two frames. As an
+		' example, if the time difference is 100ms, and the target time difference is 10 ms, 
+		' gDeltaFactor would be 100 / 10 = 10. This means that game objects movement
+		' will be multiplied by 10 to make the game objects move at the intended speed.
+		
+		gDeltaTime = time
+	End
+End

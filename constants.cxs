@@ -1,0 +1,27 @@
+' Monkey Pixels, FoppyGames 2011.
+' constants.monkey.
+
+Const SCREEN_WIDTH: Int = 640
+Const SCREEN_HEIGHT: Int = 480
+Const UPDATE_RATE: Int = 60
+
+Const STATE_TITLE: Int = 0
+Const STATE_GAME: Int = 1
+Const STATE_END: Int = 2
+
+Const PIXEL_WIDTH: Int = 16	'It was 4.
+Const PIXEL_HEIGHT: Int = 16
+
+Const PLAYER_SPEED: Float = 2.0
+Const ENEMY_SPEED: Float = 0.8
+
+Const LAUNCH_RADIUS:Int = 14
+Const HIT_RADIUS: Int = 2
+
+Const SPECIAL_CHANCE:Int = 2
+Const SPECIAL_REMOVE_EVERY_NTH: Int = 8
+Const SPECIAL_REMOVE_RADIUS:Int = 60
+
+Const ENEMY_MIN_INTERVAL:Int = 150
+Const ENEMY_MAX_INTERVAL:Int = 700
+Const ENEMY_ALPHA_CHANGE:Float = 1.0/(UPDATE_RATE*2)

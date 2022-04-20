@@ -1,0 +1,206 @@
+' Monkey Pixels, FoppyGames 2011.
+' monkeypixels.monkey
+
+Strict
+
+Import mojo
+'Import includes.constants
+'Import includes.deltatimer
+'Import includes.pixel
+'Import includes.player
+'Import includes.enemy
+
+Import includes.constants
+Import deltatimer
+Import pixel
+Import player
+Import enemy
+
+
+Class Game Extends App
+	Field fGfxTitleScreen: Image
+	Field fGfxGameOverScreen: Image
+	Field fGfxDigits:Image	
+	
+	Field fPlayer: TPixel
+	Field fState: Int
+	Field fNextEnemy: Int
+	Field fNextPoint: Int
+	Field fScore: Int
+	Field fHiScore: Int
+	
+	Method OnCreate:Int() 
+		loadGraphics()
+		SetUpdateRate UPDATE_RATE
+		
+		switchToState(STATE_TITLE)
+		TDeltaTimer.init()
+		fHiScore = 0
+		
+		Return 0
+	End
+	
+	Method OnUpdate: Int()
+		TDeltaTimer.Update()
+		
+		Select fState
+			' This is a select statement that tells Monkey what
+			' Monkey what should be done for different value of fState.
+			Case STATE_TITLE
+				' space bar was pressed.
+				If (KeyHit(KEY_SPACE)) Then	
+					switchToState(STATE_GAME)
+				End If
+				
+			Case STATE_GAME
+				TPixel.updateAll()
+				TPixel.removeInactive()
+				
+				' Time to add point to score.
+				If (Millisecs() >= fNextPoint) Then
+					fScore += 1
+					fNextPoint = Millisecs() + 1000
+				End If
+				
+				' time to add enemy.
+				If (Millisecs() >= fNextEnemy) Then
+					' When it is created the enemy, it is not necessary to store on variable because,
+					' into of class constructor, the method of base class is invoked what to store
+					' on the global variable gList.
+					New TEnemy()
+					fNextEnemy = Millisecs() + Int(Rnd(ENEMY_MIN_INTERVAL, ENEMY_MAX_INTERVAL))
+				End If
+				
+				' Special was hit.
+				If (TPixel.gSpecialHit) Then
+					TPixel.deactivateEveryNthEnemy(fPlayer)
+					TPixel.deactivateEnemiesAroundPlayer(fPlayer)
+					TPixel.gSpecialHit = False
+				End If
+				
+				' Player was hit.
+				If (TPixel.gPlayerHit) Then
+					switchToState(STATE_END)
+				' Escape key was pressed.
+				Else If (KeyHit(KEY_ESCAPE)) Then
+					switchToState(STATE_TITLE)
+				End If
+				
+			Case STATE_END
+				' space bar was pressed.
+				If (KeyHit(KEY_SPACE)) THEN
+					switchToState(STATE_TITLE)
+				End If
+		End Select
+		
+		Return 0
+	End
+	
+	Method OnRender:Int() 
+		SetAlpha(1)
+		SetColor(255, 255, 255)
+		
+		If (fState = STATE_TITLE) Then
+			DrawImage(fGfxTitleScreen, 0, 0)
+		Else
+			Cls(0, 0, 0)
+		End If
+		
+		' display hi-score and current score.
+		drawDigits(String(fScore), SCREEN_WIDTH-8, SCREEN_HEIGHT-25, True)
+		drawDigits(String(fHiScore), 8, SCREEN_HEIGHT-25)
+		
+		If (fState = STATE_GAME) Then
+			TPixel.renderAll()
+		End If
+		
+		If (fState = STATE_END) Then
+			TPixel.renderAll()
+			SetAlpha(1)
+			SetColor(255, 255, 255)
+			DrawImage(fGfxGameOverScreen, 0, 0)
+		End If
+		
+		Return 0
+	End
+	
+	Method drawDigits:Void (pNumber:String, pX:Int, pY:Int, pRightAligned: Bool=False)
+		If (pRightAligned) Then
+			pX -= pNumber.Length() * 17
+		End If
+		
+		For Local i:Int = 0 To pNumber.Length() - 1
+			DrawImage(fGfxDigits, pX + i * 17, pY, pNumber[i] - 48)
+		Next
+	End
+	
+	Method switchToState:Void (pState:Int)
+		' This method is called to change the current game state. In addition to just
+		' changing the value in fState (for wich alone you would not need a separate
+		' method) it does everything needed to initialize the new state (and to shut down
+		' the old state, if necessary). For each state there is a 'Case' in the select
+		' statement below.
+		
+		Select (pState)
+			Case STATE_TITLE
+				' When switching to the title screen: store the new hi-score if it is
+				' indeed better that the current hi-score.
+				
+				' new hi-score was reached.
+				If (fScore > fHiScore) Then
+					fHiScore = fScore
+				End
+				
+			Case STATE_GAME
+				' When switching to the game play state: set a new base value
+				' (seed) for random numbers, initialize the TPixel class (it will
+				' remove all current TPixel objects), create the player, seth the
+				' first time-points for a new enemy and the next score point, and
+				' finally set the score to 0.
+				
+				Seed = Millisecs()
+				TPixel.init()
+				fPlayer = New TPlayer()
+				fNextEnemy = Millisecs() + 1000
+				fNextPoint = Millisecs() + 1000
+				fScore = 0
+				
+			Case STATE_END
+				' When switching to the game over state, we don't need to do
+				' anything extra, but I still put a Case here, to make it
+				' complete.
+		End Select
+		
+		fState = pState
+		
+		' Here the new state value is actually store in fstate. This is done at the end.
+		' If necessary the code above could still use the state value in fState before it
+		' was changed, to refer to the old state. It was not necessary here but you can
+		' imagine saving something like "if the old state is the title screen, play a 
+		' son for leaving the title screen".
+	End Method
+	
+	Method loadGraphics:Void()
+		' A method for loading the images used in this game into the fields of the Game
+		' class. Monkey knows that images loaded with LoadImage() will be in the 
+		' projectname.data folder in the project folder, so here we just specify the file 
+		' name, not hte path to the file. The projectname.data folder is where you need
+		' to put all such data. This all goes for sound effects and music (such as .wav
+		' and .mp3 files), but Monkey Pixels does not use any sound effects.
+		
+		fGfxTitleScreen = LoadImage("titlescreen.png")
+		fGfxGameOverScreen = LoadImage("titleoverscreen.png")
+		fGfxGameOverScreen = LoadImage("gameoverscreen.png")
+		fGfxDigits = LoadImage("digits.png", 10)
+	End 
+End
+		
+	
+				
+			
+
+'-----------------------------------------------------------------
+Function Main:Int()
+	New Game
+	Return 0
+End
